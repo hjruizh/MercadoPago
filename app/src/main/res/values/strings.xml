@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">Mercado Pago</string>
+    <string name="select_pay_medio">Seleccione medio de pago</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="select_bank">Seleccione Banco</string>
+    <string name="enter_amount">Ingrese monto</string>
+    <string name="next">Siguiente</string>
+    <string name="quotas">Seleccione Nro de Cuotas</string>
+    <string name="amount">Monto</string>
+    <string name="pay_medio">Medio de pago</string>
+    <string name="bank">Banco</string>
+    <string name="title_quotas">Cuotas</string>
+    <string name="make_other_pay">Realizar otro pago</string>
+</resources>
