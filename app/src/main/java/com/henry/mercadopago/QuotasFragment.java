@@ -11,10 +11,19 @@ import android.widget.AdapterView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 
-import connection.GetBank;
-import connection.GetPayMedio;
-import connection.GetQuotas;
+import java.util.List;
+
+import adapter.QuotaAdapter;
+import connection.Factory;
+import io.reactivex.Observer;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
+import model.APIService;
+import model.Quota;
+import model.Variables;
 
 
 /**
@@ -85,12 +94,8 @@ public class QuotasFragment extends Fragment {
         linearLayout = (LinearLayout) rootView.findViewById(R.id._linear_layout_quotas);
 
         ListView quotas = (ListView) rootView.findViewById(R.id._listViewQuotas);
-        if (mParam3.equals(""))
-            GetQuotas.getQuotas(mParam1, GetPayMedio.payMedio.get(Integer.parseInt(mParam2)).getId(),
-                "",context,quotas,linearLayout,progressBar);
-        else
-            GetQuotas.getQuotas(mParam1, GetPayMedio.payMedio.get(Integer.parseInt(mParam2)).getId(),
-                GetBank.banks.get(Integer.parseInt(mParam3)).getId(),context,quotas,linearLayout,progressBar);
+
+        getList(quotas);
 
         quotas.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -110,6 +115,46 @@ public class QuotasFragment extends Fragment {
         });
 
         return rootView;
+    }
+
+    public void getList(final ListView gridView){
+        APIService service = Factory.getClient().create(APIService.class);
+        String issuer_id = "";
+        if (!mParam3.equals(""))
+            issuer_id = Variables.getBanks().get(Integer.parseInt(mParam3)).getId();
+        service.getCuotas(Variables.getPublic_key(),mParam1,Variables.getPayMedios().get(Integer.parseInt(mParam2)).getId()
+                ,issuer_id)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<List<Quota>>() {
+
+                    @Override
+                    public void onError(Throwable e) {
+                        Toast.makeText(context, "Error: " + e.getMessage(),
+                                Toast.LENGTH_LONG).show();
+                        linearLayout.setVisibility(View.VISIBLE);
+                        gridView.setVisibility(View.VISIBLE);
+                        progressBar.setVisibility(View.GONE);
+                    }
+
+                    @Override
+                    public void onComplete() {
+                        linearLayout.setVisibility(View.VISIBLE);
+                        gridView.setVisibility(View.VISIBLE);
+                        progressBar.setVisibility(View.GONE);
+                    }
+
+                    @Override
+                    public void onSubscribe(Disposable d) {
+
+                    }
+
+                    @Override
+                    public void onNext(List<Quota> quotasResult) {
+                        Variables.setQuotas(quotasResult);
+                        gridView.setAdapter(new QuotaAdapter(context, quotasResult.get(0).getPayerCosts()));
+                    }
+                });
     }
 
 }

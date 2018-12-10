@@ -14,9 +14,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import connection.GetBank;
-import connection.GetPayMedio;
-import connection.GetQuotas;
+import model.Variables;
 
 
 /**
@@ -96,15 +94,15 @@ public class PayFragment extends Fragment {
             TextView result_bank = (TextView) rootView.findViewById(R.id._textViewBank);
             TextView result_quotas = (TextView) rootView.findViewById(R.id._textViewQuotas);
             result_amount.setText(mParam1);
-            result_pay_medio.setText(GetPayMedio.payMedio.get(Integer.parseInt(mParam2)).getName());
+            result_pay_medio.setText(Variables.getPayMedios().get(Integer.parseInt(mParam2)).getName());
             //LinearLayout bank =
             if (mParam3.equals(""))
                 rootView.findViewById(R.id._linear_layout_bank).setVisibility(View.GONE);
             else {
                 rootView.findViewById(R.id._linear_layout_bank).setVisibility(View.VISIBLE);
-                result_bank.setText(GetBank.banks.get(Integer.parseInt(mParam3)).getName());
+                result_bank.setText(Variables.getBanks().get(Integer.parseInt(mParam3)).getName());
             }
-            result_quotas.setText(GetQuotas.payerCosts.get(Integer.parseInt(mParam4)).getRecommendedMessage());
+            result_quotas.setText(Variables.getQuotas().get(0).getPayerCosts().get(Integer.parseInt(mParam4)).getRecommendedMessage());
             linearLayout.setVisibility(View.GONE);
             result.setVisibility(View.VISIBLE);
             progressBar.setVisibility(View.GONE);

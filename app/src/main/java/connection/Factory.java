@@ -1,4 +1,6 @@
 package connection;
+import com.jakewharton.retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
+
 import java.io.IOException;
 
 import model.APIService;
@@ -39,6 +41,7 @@ public class Factory {
             Retrofit retrofit = new Retrofit.Builder()
                     .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
                     .addConverterFactory(GsonConverterFactory.create())
+                    .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
                     .baseUrl(Variables.getUrl())
                     .client(client)
                     .build();
@@ -47,5 +50,20 @@ public class Factory {
         } else {
             return service;
         }
+    }
+
+    private final static String BASE_URL = Variables.getUrl();
+
+    private static Retrofit retrofit = null;
+
+    public static Retrofit getClient() {
+        if (retrofit == null) {
+            retrofit = new Retrofit.Builder()
+                    .addConverterFactory(GsonConverterFactory.create())
+                    .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+                    .baseUrl(BASE_URL)
+                    .build();
+        }
+        return retrofit;
     }
 }

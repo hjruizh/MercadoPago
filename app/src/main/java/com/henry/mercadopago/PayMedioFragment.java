@@ -1,8 +1,7 @@
 package com.henry.mercadopago;
 
+import android.app.MediaRouteButton;
 import android.content.Context;
-import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
@@ -12,9 +11,19 @@ import android.widget.AdapterView;
 import android.widget.GridView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
-import android.widget.RelativeLayout;
+import android.widget.Toast;
 
-import connection.GetPayMedio;
+import java.util.List;
+
+import adapter.PayMedioAdapter;
+import connection.Factory;
+import io.reactivex.Observer;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
+import model.APIService;
+import model.PayMedio;
+import model.Variables;
 
 public class PayMedioFragment extends Fragment {
 
@@ -66,8 +75,8 @@ public class PayMedioFragment extends Fragment {
 
         progressBar = (ProgressBar) rootView.findViewById(R.id.progressBar);
         linearLayout = (LinearLayout) rootView.findViewById(R.id._linear_layout_pay_medio);
-        GridView gridView = (GridView) rootView.findViewById(R.id._gridViewPayMedio);
-        GetPayMedio.getPayMedio(context,gridView,linearLayout,progressBar);
+        final GridView gridView = (GridView) rootView.findViewById(R.id._gridViewPayMedio);
+        getList(gridView);
 
         gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -75,7 +84,7 @@ public class PayMedioFragment extends Fragment {
                 BankFragment fr = new BankFragment();
                 Bundle bn = new Bundle();
                 bn.putString("amount",mParam1);
-                bn.putString("id_pay_medio",String.valueOf(position));
+                bn.putString("id_pay_medio", String.valueOf(position));
                 fr.setArguments(bn);
                 getActivity().getSupportFragmentManager().beginTransaction()
                         .replace(R.id.fragment,fr)
@@ -85,5 +94,43 @@ public class PayMedioFragment extends Fragment {
         });
 
         return rootView;
+    }
+
+    public void getList(final GridView gridView){
+        APIService service = Factory.getClient().create(APIService.class);
+
+        service.getPayMedio(Variables.getPublic_key())
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<List<PayMedio>>() {
+
+                    @Override
+                    public void onError(Throwable e) {
+                        Toast.makeText(context, "Error: " + e.getMessage(),
+                                Toast.LENGTH_LONG).show();
+                        linearLayout.setVisibility(View.VISIBLE);
+                        gridView.setVisibility(View.VISIBLE);
+                        progressBar.setVisibility(View.GONE);
+                    }
+
+                    @Override
+                    public void onComplete() {
+                        linearLayout.setVisibility(View.VISIBLE);
+                        gridView.setVisibility(View.VISIBLE);
+                        progressBar.setVisibility(View.GONE);
+
+                    }
+
+                    @Override
+                    public void onSubscribe(Disposable d) {
+
+                    }
+
+                    @Override
+                    public void onNext(List<PayMedio> payMediosResult) {
+                        Variables.setPayMedios(payMediosResult);
+                        gridView.setAdapter(new PayMedioAdapter(context, payMediosResult));
+                    }
+                });
     }
 }

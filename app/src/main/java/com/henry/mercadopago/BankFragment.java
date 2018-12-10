@@ -11,9 +11,19 @@ import android.widget.AdapterView;
 import android.widget.GridView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 
-import connection.GetBank;
-import connection.GetPayMedio;
+import java.util.List;
+
+import adapter.BankAdapter;
+import connection.Factory;
+import io.reactivex.Observer;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
+import model.APIService;
+import model.Bank;
+import model.Variables;
 
 
 /**
@@ -78,7 +88,9 @@ public class BankFragment extends Fragment {
         progressBar = (ProgressBar) rootView.findViewById(R.id.progressBar);
         linearLayout = (LinearLayout) rootView.findViewById(R.id._linear_layout_bank);
         GridView gridView = (GridView) rootView.findViewById(R.id._gridViewBank);
-        GetBank.getBank(mParam1,mParam2,GetPayMedio.payMedio.get(Integer.parseInt(mParam2)).getId(),context,gridView,linearLayout,progressBar, this);
+        //GetBank.getBank(mParam1,mParam2,GetPayMedio.payMedio.get(Integer.parseInt(mParam2)).getId(),context,gridView,linearLayout,progressBar, this);
+
+        getList(gridView);
 
         gridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -87,7 +99,7 @@ public class BankFragment extends Fragment {
                 Bundle bn = new Bundle();
                 bn.putString("amount",mParam1);
                 bn.putString("id_pay_medio",mParam2);
-                bn.putString("bank",String.valueOf(position));
+                bn.putString("bank", String.valueOf(position));
                 fr.setArguments(bn);
                 getActivity().getSupportFragmentManager().beginTransaction()
                         .replace(R.id.fragment,fr)
@@ -99,7 +111,7 @@ public class BankFragment extends Fragment {
         return rootView;
     }
 
-    public void sendBank(String mParam1, String mParam2){
+    public void sendBank(){
         QuotasFragment fr = new QuotasFragment();
         Bundle bn = new Bundle();
         bn.putString("amount",mParam1);
@@ -110,6 +122,48 @@ public class BankFragment extends Fragment {
                 .replace(R.id.fragment,fr)
                 .addToBackStack(null)
                 .commit();
+    }
+
+    public void getList(final GridView gridView){
+        APIService service = Factory.getClient().create(APIService.class);
+
+        service.getBank(Variables.getPublic_key(),Variables.getPayMedios().get(Integer.parseInt(mParam2)).getId())
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<List<Bank>>() {
+
+                    @Override
+                    public void onError(Throwable e) {
+                        Toast.makeText(context, "Error: " + e.getMessage(),
+                                       Toast.LENGTH_LONG).show();
+                        linearLayout.setVisibility(View.VISIBLE);
+                        gridView.setVisibility(View.VISIBLE);
+                        progressBar.setVisibility(View.GONE);
+                    }
+
+                    @Override
+                    public void onComplete() {
+                        if (Variables.getBanks().isEmpty()){
+                            sendBank();
+                        }
+                        else {
+                            linearLayout.setVisibility(View.VISIBLE);
+                            gridView.setVisibility(View.VISIBLE);
+                            progressBar.setVisibility(View.GONE);
+                        }
+                    }
+
+                    @Override
+                    public void onSubscribe(Disposable d) {
+
+                    }
+
+                    @Override
+                    public void onNext(List<Bank> banksResult) {
+                        Variables.setBanks(banksResult);
+                        gridView.setAdapter(new BankAdapter(context, banksResult));
+                    }
+                });
     }
 
 }
